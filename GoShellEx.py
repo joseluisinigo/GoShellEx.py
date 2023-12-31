@@ -28,7 +28,8 @@ def generate_token(command, url, port, secret):
 
     # Usa cURL directamente con el token en el encabezado "Authorization"
     try:
-        response = subprocess.check_output(["curl", "-H", f"Authorization: Bearer {token}", url_with_token], text=True)
+        # Captura solo la salida del comando, sin la información del proceso
+        response = subprocess.check_output(["curl", "-s", "-H", f"Authorization: Bearer {token}", url_with_token], text=True)
         print("Respuesta del servidor:")
         print(response)
     except subprocess.CalledProcessError as e:
@@ -59,3 +60,4 @@ if __name__ == "__main__":
 
         # Utiliza la URL, el puerto y el secreto proporcionados como argumentos, si están presentes
         generate_token(user_input, args.url, args.port, args.secret)
+
