@@ -2,8 +2,8 @@ import jwt
 import datetime
 import subprocess
 import sys
-import requests
 import argparse
+import readline  # Agregado para habilitar la funcionalidad de historial y edición de línea
 
 def generate_token(command, url, port, secret, amsi):
     # Utiliza el secreto proporcionado o el valor predeterminado
@@ -58,10 +58,17 @@ if __name__ == "__main__":
 
     # Bucle para ingresar comandos hasta que se ingrese 'exit'
     while True:
-        user_input = input("Ingresa un comando: ")
+        try:
+            # Utiliza readline para habilitar la edición de línea y el historial
+            user_input = input("Ingresa un comando: ")
 
-        if user_input.lower() == 'exit':
-            break
+            if user_input.lower() == 'exit':
+                break
 
-        # Utiliza la URL, el puerto y el secreto proporcionados como argumentos, si están presentes
-        generate_token(user_input, parser.parse_args().url, parser.parse_args().port, parser.parse_args().secret, parser.parse_args().amsi)
+            # Utiliza la URL, el puerto y el secreto proporcionados como argumentos, si están presentes
+            generate_token(user_input, parser.parse_args().url, parser.parse_args().port, parser.parse_args().secret, parser.parse_args().amsi)
+
+        except KeyboardInterrupt:
+            print("\nPresionaste Ctrl+C. Para salir, ingresa 'exit'.")
+        except EOFError:
+            print("\nDetectado final de archivo (EOF). Para salir, ingresa 'exit'.")
